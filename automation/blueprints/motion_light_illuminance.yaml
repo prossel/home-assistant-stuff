@@ -2,7 +2,7 @@ blueprint:
   name: Motion-activated Light with illuminance
   description: Turn on a light when motion is detected. Optional illuminance threshold to activate only in the dark. Based on the HA Motion-activated light blueprint.
   domain: automation
-  source_url: https://github.com/prossel/core/blob/main/automation/blueprints/motion_light_illuminance.yaml
+  source_url: https://github.com/prossel/home-assistant-stuff/blob/main/automation/blueprints/motion_light_illuminance.yaml
   author: Pierre Rossel
   input:
     motion_entity:
