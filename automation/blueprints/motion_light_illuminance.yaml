@@ -1,0 +1,86 @@
+blueprint:
+  name: Motion-activated Light with illuminance
+  description: Turn on a light when motion is detected. Optional illuminance threshold to activate only in the dark. Based on the HA Motion-activated light blueprint.
+  domain: automation
+  source_url: https://github.com/prossel/core/blob/main/automation/blueprints/motion_light_illuminance.yaml
+  author: Pierre Rossel
+  input:
+    motion_entity:
+      name: Motion Sensor
+      selector:
+        entity:
+          filter:
+          - device_class:
+            - occupancy
+            domain:
+            - binary_sensor
+          - device_class:
+            - motion
+            domain:
+            - binary_sensor
+          multiple: false
+          reorder: false
+    light_target:
+      name: Light
+      selector:
+        target:
+          entity:
+          - domain:
+            - light
+    no_motion_wait:
+      name: Wait time
+      description: Time to leave the light on after last motion is detected.
+      default: 120
+      selector:
+        number:
+          min: 0.0
+          max: 3600.0
+          unit_of_measurement: seconds
+          step: 1.0
+          mode: slider
+    illuminance_sensor:
+      name: Illuminance sensor (optional)
+      default: null
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    illuminance_threshold:
+      name: Illuminance threshold (lux)
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lux
+mode: restart
+max_exceeded: silent
+triggers:
+  trigger: state
+  entity_id: !input motion_entity
+  from: 'off'
+  to: 'on'
+variables:
+  illuminance_sensor: !input illuminance_sensor
+  illuminance_threshold: !input illuminance_threshold
+conditions:
+  - condition: template
+    value_template: >
+      {% set sensor = illuminance_sensor %}
+      {{ sensor in [none, '', 'None'] or
+         states(sensor) | float(9999) < illuminance_threshold }}
+actions:
+- alias: Turn on the light
+  action: light.turn_on
+  target: !input light_target
+- alias: Wait until there is no motion from device
+  wait_for_trigger:
+    trigger: state
+    entity_id: !input motion_entity
+    from: 'on'
+    to: 'off'
+- alias: Wait the number of seconds that has been set
+  delay: !input no_motion_wait
+- alias: Turn off the light
+  action: light.turn_off
+  target: !input light_target
